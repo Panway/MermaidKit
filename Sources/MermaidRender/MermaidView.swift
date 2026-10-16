@@ -86,7 +86,7 @@ extension MermaidView: Equatable {
 
 private extension Image {
     init(platformImage: PlatformImage) {
-        #if canImport(AppKit)
+        #if canImport(AppKit) && !canImport(UIKit)
         self.init(nsImage: platformImage)
         #else
         self.init(uiImage: platformImage)

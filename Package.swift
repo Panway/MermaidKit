@@ -32,7 +32,16 @@ import PackageDescription
 // or build/test with `--traits LinuxRaster`.
 let package = Package(
     name: "MermaidKit",
-    platforms: [.macOS(.v14), .iOS(.v17), .visionOS(.v1)],
+    // ── 本地 fork 改动（Panway/MermaidKit，branch: ios16-support）─────────
+    // 上游声明 .iOS(.v17) / .macOS(.v14)，但全库源码实测**零 iOS 17 独占 API**：
+    //   - 无 @available(iOS 17 / @Observable / @Bindable
+    //   - 无 ContentUnavailableView / LabeledContent / Grid / ScrollPosition
+    //   - 无 symbolEffect / TextRenderer / scrollBounceBehavior
+    //   - SwiftUI 只有 MermaidView.swift 一处，最"新"的 API 是 iOS 15 的
+    //     .foregroundStyle(.secondary) 和 .quaternary
+    // 所以纸面地板降到 iOS 16 / macOS 13 / macCatalyst 16，配合宿主项目
+    // MarkdownEditorHy4 的部署目标。将来上游跟进时，只需 rebase 这一行。
+    platforms: [.macOS(.v13), .iOS(.v16), .macCatalyst(.v16), .visionOS(.v1)],
     products: [
         .library(name: "MermaidLayout", targets: ["MermaidLayout"]),
         .library(name: "MermaidRender", targets: ["MermaidRender"]),
