@@ -4,7 +4,7 @@
 #if canImport(AppKit) || canImport(UIKit)
 import Foundation
 import CoreGraphics
-#if canImport(AppKit)
+#if canImport(AppKit) && !canImport(UIKit)
 import AppKit
 /// `NSColor` on macOS, `UIColor` on UIKit platforms.
 public typealias PlatformColor = NSColor
@@ -33,7 +33,7 @@ func rgbStatic(_ hex: UInt32, alpha: CGFloat = 1) -> PlatformColor {
 /// effective `NSAppearance` best-matches dark aqua (macOS) or the trait
 /// collection's `userInterfaceStyle` is dark (UIKit), else `light`.
 func themeDynamic(light: PlatformColor, dark: PlatformColor) -> PlatformColor {
-    #if canImport(AppKit)
+    #if canImport(AppKit) && !canImport(UIKit)
     return NSColor(name: nil) { $0.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? dark : light }
     #else
     return UIColor { $0.userInterfaceStyle == .dark ? dark : light }
@@ -45,7 +45,7 @@ func themeDynamic(light: PlatformColor, dark: PlatformColor) -> PlatformColor {
 /// plain `cgColor` when conversion fails); UIKit's `cgColor` already
 /// resolves against the current trait collection.
 func resolvedCGColor(_ color: PlatformColor) -> CGColor {
-    #if canImport(AppKit)
+    #if canImport(AppKit) && !canImport(UIKit)
     return color.usingColorSpace(.sRGB)?.cgColor ?? color.cgColor
     #else
     return color.cgColor

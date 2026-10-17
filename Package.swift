@@ -32,7 +32,34 @@ import PackageDescription
 // or build/test with `--traits LinuxRaster`.
 let package = Package(
     name: "MermaidKit",
-    platforms: [.macOS(.v14), .iOS(.v17), .visionOS(.v1)],
+    // ── 本地 fork 改动（Panway/MermaidKit，branch: ios16-support）─────────
+    // 上游声明 .iOS(.v17) / .macOS(.v14)，这里降到 iOS 16 / macOS 13 /
+    // macCatalyst 16，配合宿主项目 MarkdownEditorHy4 的部署目标。
+    //
+    // 【为什么降到 iOS 16 是安全的】
+    // 除下面这一行外，源码只动了 6 个文件（见 Sources/MermaidRender/），
+    // 全部是**平台判断**的修正，没有任何降级 API 替换 —— 因为全库源码实测
+    // 零 iOS 17 独占 API：无 @available(iOS 17)、无 @Observable / @Bindable、
+    // 无 ContentUnavailableView / LabeledContent / Grid / ScrollPosition、
+    // 无 symbolEffect / TextRenderer / scrollBounceBehavior；SwiftUI 只有
+    // MermaidView.swift 一处，最"新"的用法是 iOS 15 的 .foregroundStyle(.secondary)。
+    //
+    // 【为什么必须动源码（另加 macCatalyst）】
+    // Mac Catalyst 下 `canImport(AppKit)` 仍然为 **true**（`canImport(UIKit)` 也为 true），
+    // 于是上游那套裸 `#if canImport(AppKit)` 会全部走进 AppKit 分支，而
+    // NSColor / NSFont / NSAppearance / NSGraphicsContext / NSFont.Weight
+    // 在 Catalyst 下**一律 unavailable** —— 实测报约 140 个错误、横跨 26 个文件。
+    // 判据必须写成 `#if canImport(AppKit) && !canImport(UIKit)`（Catalyst 下为 false）。
+    // 根因在 Platform.swift 的三个 typealias，改它一处即消掉绝大部分派生错误。
+    //
+    // 【精简记录】最初改了 33 个文件，其中 26 个（25 个 DiagramRenderer+*.swift
+    // 的 import 分支 + MermaidRenderer+SVG.swift）实测编译上非必需（还原后仍 BUILD
+    // SUCCEEDED），已还原成上游，只留必需的 7 个：
+    //   Package.swift / Platform.swift（根因）/ DiagramTheme.swift /
+    //   DiagramRenderer.swift / DiagramRenderer+PDF.swift /
+    //   MermaidRenderer.swift / MermaidView.swift
+    // 将来上游跟进时，rebase 这 7 个文件即可。
+    platforms: [.macOS(.v13), .iOS(.v16), .macCatalyst(.v16), .visionOS(.v1)],
     products: [
         .library(name: "MermaidLayout", targets: ["MermaidLayout"]),
         .library(name: "MermaidRender", targets: ["MermaidRender"]),
